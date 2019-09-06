@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:id="@+id/other">
+    <item
+        android:id="@+id/nav_setting"
+        android:title="@string/nav_setting"
+        android:icon="@drawable/ic_night_gray_24dp"/>
+        <item
+            android:id="@+id/nav_share"
+            android:title="@string/nav_share"
+            android:icon="@drawable/ic_night_gray_24dp"/>
+</group>
+</menu>
