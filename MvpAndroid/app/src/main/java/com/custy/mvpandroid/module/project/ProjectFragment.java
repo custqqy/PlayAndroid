@@ -15,6 +15,11 @@ public class ProjectFragment extends BaseFragment {
     }
 
     @Override
+    protected void loadData() {
+
+    }
+
+    @Override
     protected void initView(View root) {
 
     }

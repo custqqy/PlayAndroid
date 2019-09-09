@@ -1,5 +1,8 @@
 package com.custy.mvpandroid.module.home;
+
+import android.content.Context;
 import android.view.View;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -9,100 +12,114 @@ import com.custy.mvpandroid.InitApp;
 import com.custy.mvpandroid.R;
 import com.custy.mvpandroid.bean.BannerBean;
 import com.custy.mvpandroid.bean.Response;
-import com.custy.mvpandroid.http.MvpApi;
+import com.custy.mvpandroid.http.RetrofitManager;
+import com.custy.mvpandroid.http.ServerApi;
 import com.custy.mvpandroid.widget.GlideImageLoader;
 import com.youth.banner.Banner;
+import com.youth.banner.BannerConfig;
+import com.youth.banner.Transformer;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observer;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class HomeFragment extends BaseFragment {
+public class HomeFragment extends BaseFragment implements HomeContract.View {
+    private HomeContract.Presenter mPresenter;
+    private HomePresenter mHomePresenter;
     private Banner mBanner;
     private RecyclerView mRecyclerView;
     private static HomeFragment instance;
     private HomeListAdapter mAdapter;
 
-    public static HomeFragment getInstance(){
-        if (instance==null) {
-            instance=new HomeFragment();
+    public static HomeFragment getInstance() {
+        if (instance == null) {
+            instance = new HomeFragment();
         }
         return instance;
     }
 
 
+
+
     @Override
     protected void initView(View root) {
-        mBanner=root.findViewById(R.id.home_banner);
-        mRecyclerView=root.findViewById(R.id.home_recycler);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(InitApp.mAppContext,RecyclerView.VERTICAL,false));
-        mAdapter = new HomeListAdapter(R.layout.item_home_list, getData());
+        mRecyclerView = root.findViewById(R.id.home_recycler);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(InitApp.mAppContext, RecyclerView.VERTICAL, false));
+        mAdapter = new HomeListAdapter(R.layout.item_home_list, null);
         mRecyclerView.setAdapter(mAdapter);
+        mBanner = root.findViewById(R.id.home_banner);
+        mBanner.setBannerStyle(BannerConfig.CIRCLE_INDICATOR_TITLE_INSIDE);
+        mBanner.setBannerAnimation(Transformer.CubeIn);
+        mBanner.startAutoPlay();
+        mBanner.setDelayTime(5000);
         mBanner.setImageLoader(new GlideImageLoader());
-//        mBanner.setImages(getImageList());
-//        mBanner.start();
+        mHomePresenter=new HomePresenter(this);
     }
-
-    private List<Integer> getImageList() {
-        List<Integer>list=new ArrayList<>();
-
-        list.add(R.mipmap.ic_launcher);
-        list.add(R.mipmap.ic_launcher);
-        list.add(R.mipmap.ic_launcher);
-        list.add(R.mipmap.ic_launcher);
-//        list.add("http://image.baidu.com/search/detail?ct=503316480&z=undefined&tn=baiduimagedetail&ipn=d&word=%E7%BE%8E%E5%A5%B3&step_word=&ie=utf-8&in=&cl=2&lm=-1&st=undefined&hd=undefined&latest=undefined&copyright=undefined&cs=3473128871,1574804327&os=682204536,490884976&simid=0,0&pn=4&rn=1&di=16601200&ln=1690&fr=&fmq=1567685801515_R&fm=&ic=undefined&s=undefined&se=&sme=&tab=0&width=undefined&height=undefined&face=undefined&is=0,0&istype=0&ist=&jit=&bdtype=0&spn=0&pi=0&gsm=0&objurl=http%3A%2F%2Fpic27.nipic.com%2F20130314%2F11899688_192542628000_2.jpg&rpstart=0&rpnum=0&adpicid=0&force=undefined");
-//        list.add("http://image.baidu.com/search/detail?ct=503316480&z=undefined&tn=baiduimagedetail&ipn=d&word=%E7%BE%8E%E5%A5%B3&step_word=&ie=utf-8&in=&cl=2&lm=-1&st=undefined&hd=undefined&latest=undefined&copyright=undefined&cs=1487351610,315303232&os=234252567,222961974&simid=0,0&pn=6&rn=1&di=16589100&ln=1690&fr=&fmq=1567685801515_R&fm=&ic=undefined&s=undefined&se=&sme=&tab=0&width=undefined&height=undefined&face=undefined&is=0,0&istype=0&ist=&jit=&bdtype=0&spn=0&pi=0&gsm=0&objurl=http%3A%2F%2Fpic33.nipic.com%2F20130924%2F9822353_015119969000_2.jpg&rpstart=0&rpnum=0&adpicid=0&force=undefined");
-//        list.add("http://image.baidu.com/search/detail?ct=503316480&z=undefined&tn=baiduimagedetail&ipn=d&word=%E7%BE%8E%E5%A5%B3&step_word=&ie=utf-8&in=&cl=2&lm=-1&st=undefined&hd=undefined&latest=undefined&copyright=undefined&cs=4016607068,4021246806&os=619995046,3991112566&simid=4118974903,549476096&pn=100&rn=1&di=145200&ln=1690&fr=&fmq=1567685801515_R&fm=&ic=undefined&s=undefined&se=&sme=&tab=0&width=undefined&height=undefined&face=undefined&is=0,0&istype=0&ist=&jit=&bdtype=0&spn=0&pi=0&gsm=3c&objurl=http%3A%2F%2Fn.sinaimg.cn%2Fsports%2F20161220%2FH4Uw-fxytqax6757480.jpg&rpstart=0&rpnum=0&adpicid=0&force=undefined");
-//        list.add("http://image.baidu.com/search/detail?ct=503316480&z=undefined&tn=baiduimagedetail&ipn=d&word=%E7%BE%8E%E5%A5%B3&step_word=&ie=utf-8&in=&cl=2&lm=-1&st=undefined&hd=undefined&latest=undefined&copyright=undefined&cs=4033919967,4068691540&os=488628610,927961997&simid=0,0&pn=152&rn=1&di=86900&ln=1690&fr=&fmq=1567685801515_R&fm=&ic=undefined&s=undefined&se=&sme=&tab=0&width=undefined&height=undefined&face=undefined&is=0,0&istype=0&ist=&jit=&bdtype=0&spn=0&pi=0&gsm=78&objurl=http%3A%2F%2Fpic.eastlady.cn%2Fuploads%2Ftp%2F201708%2F9999%2F4fce88791e.jpg&rpstart=0&rpnum=0&adpicid=0&force=undefined");
-        return list;
+    @Override
+    protected void loadData() {
+        mHomePresenter.loadBinner();
     }
-
-    private List<String> getData() {
-        List<String>list=new ArrayList<>();
-        for (int i = 0; i < 50; i++) {
-            list.add("num"+i);
-        }
-        return list;
-    }
-
     @Override
     public void onResume() {
         super.onResume();
-        Retrofit retrofit=new Retrofit.Builder()
-                .baseUrl(Constant.BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .build();
-        MvpApi api = retrofit.create(MvpApi.class);
-        Call<Response<List<BannerBean>>> call = api.getBannerList();
-        call.enqueue(new Callback<Response<List<BannerBean>>>() {
-            @Override
-            public void onResponse(Call<Response<List<BannerBean>>> call, retrofit2.Response<Response<List<BannerBean>>> response) {
-                List<BannerBean> data = response.body().data;
-                List<String>list=new ArrayList<>();
-                for (int i = 0; i < data.size(); i++) {
-                    list.add(data.get(i).getImagePath());
-                }
-                mBanner.setImages(list);
-                mBanner.start();
-            }
+    }
 
-            @Override
-            public void onFailure(Call<Response<List<BannerBean>>> call, Throwable t) {
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (mBanner != null) {
+            mBanner.startAutoPlay();
+        }
+    }
 
-            }
-        });
-
-
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mBanner != null) {
+            mBanner.stopAutoPlay();
+        }
     }
 
     @Override
     protected int getLayoutId() {
         return R.layout.fragment_home;
+    }
+
+    @Override
+    public void setPresenter(HomeContract.Presenter presenter) {
+        mPresenter=presenter;
+    }
+
+    @Override
+    public void showToast(String msg) {
+
+    }
+
+    @Override
+    public void showNetError() {
+
+    }
+
+    @Override
+    public void refereshBinner(List<BannerBean> data) {
+        List<String> urls = new ArrayList<>(data.size());
+        List<String> titles = new ArrayList<>(data.size());
+        for (BannerBean bean : data) {
+            urls.add(bean.getImagePath());
+            titles.add(bean.getTitle());
+        }
+        mBanner.setImages(urls);
+        mBanner.setBannerTitles(titles);
+        mBanner.start();
     }
 }
